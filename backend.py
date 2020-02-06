@@ -1,17 +1,28 @@
 import serial
 import time
-import PySide2
-import PySide2.QtGui
-from PySide2 import QtGui, QtCore, QtWidgets
-from PySide2.QtUiTools import QUiLoader
-from PySide2.QtWidgets import QApplication
-from PySide2.QtCore import QFile, QTimer
+import logging
+# import PySide2
+# import PySide2.QtGui
+# from PySide2 import QtGui, QtCore, QtWidgets
+# from PySide2.QtUiTools import QUiLoader
+# from PySide2.QtWidgets import QApplication
+# from PySide2.QtCore import QFile, QTimer
 
-class pumpObject:
+
+
+
+
+## Configure the logger.
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
+    level=logging.INFO)
+
+
+class pumpObject():
 
     def __init__(self):
         self.__PUMP_CONNECTION__ = 0 # 0 = Disconnected, 1 = Connected
         self.__PUMP_STATUS__ = 0 # 0 = Uninitialised, 1 = Ready, 2 = Busy
+        self.__PUMP_STOP__ = 0 # 0 = No emergency stop, 1 = Stop, break all pumping loops.
 
 
 
@@ -41,15 +52,24 @@ class pumpObject:
             # print(recv)
             self.__PUMP_STATUS__ = 2
 
+            while self.__PUMP_STATUS__ == 2:
+                time.sleep(0.1)
+                self.pollPumpStatus()
+
 
     def initialise(self):
-            # Initialise the instrument.
-            self.serialObject.write(b'aXR\r')
-            recv = self.read_from_pump()
-            print(recv)
-            recv = self.read_from_pump()
-            print(recv)
-            self.__PUMP_STATUS__ = 2
+        # Initialise the instrument.
+        self.serialObject.write(b'aXR\r')
+        recv = self.read_from_pump()
+        print(recv)
+        recv = self.read_from_pump()
+        print(recv)
+        self.__PUMP_STATUS__ = 2
+
+        while self.__PUMP_STATUS__ == 2:
+            time.sleep(0.1)
+            self.pollPumpStatus()
+
 
     def disconnect(self):
         print('Attempting to disconnect from %s.' % (self.serialObject.name))
@@ -61,7 +81,8 @@ class pumpObject:
 
 
     def read_from_pump(self):
-        QTimer.singleShot(10, lambda: None)
+        # QTimer.singleShot(10, lambda: None)
+        time.sleep(0.01)
         recv_buffer = b''
         while True:
             recv_byte = self.serialObject.read(1)
@@ -78,6 +99,8 @@ class pumpObject:
 
 
     def stopPump(self):
+        self.__PUMP_STOP__ = 1
+
         self.serialObject.write(b'aK\r')
         ack = self.read_from_pump()
         ack = self.read_from_pump()
@@ -120,6 +143,10 @@ class pumpObject:
             # if self.__PUMP_STATUS__ == 2:
             #     time.sleep(0.3)
 
+            # If we observe the stop command, break this loop.
+            if self.__PUMP_STOP__ == 1:
+                break
+
             if volume_remaining > syringe_volume:
                 self.pumpCmdSingleStroke(syringe, syringe_volume, aspirate, dispense, stroke_steps, syringe_volume)
                 volume_remaining = volume_remaining-syringe_volume
@@ -127,7 +154,7 @@ class pumpObject:
                 self.pumpCmdSingleStroke(syringe, volume_remaining, aspirate, dispense, stroke_steps, syringe_volume)
                 volume_remaining = volume_remaining-syringe_volume
 
-
+        self.__PUMP_STOP__ = 0
 
 
     def pumpCmdSingleStroke(self, syringe='A+B', volume=100, aspirate=1000, dispense=2500, stroke_steps=1000.0, syringe_volume=500.0):
@@ -190,7 +217,7 @@ class pumpObject:
 
         # Wait for pump to be ready.
         while self.__PUMP_STATUS__ == 2:
-            QTimer.singleShot(200, lambda: None)
+            time.sleep(0.1)
             self.pollPumpStatus()
 
 
@@ -221,27 +248,28 @@ class pumpObject:
         print(configBytes)
 
         while self.__PUMP_STATUS__ == 2:
-            # time.sleep(0.3)
-            QTimer.singleShot(200, lambda: None)
+            time.sleep(0.1)
             self.pollPumpStatus()
 
 
 
     def pollPumpStatus(self):
-        # Check if instrument is busy.
-        self.serialObject.write(b'aF\r')
-        ack = self.read_from_pump()
-        statusBytes = self.read_from_pump()
+        if self.__PUMP_CONNECTION__ == 1:
+            # Check if instrument is busy.
+            self.serialObject.write(b'aF\r')
+            ack = self.read_from_pump()
+            statusBytes = self.read_from_pump()
 
-        statusByte = statusBytes[1:2].decode('utf-8')
-        # print(statusByte)
+            statusByte = statusBytes[1:2].decode('utf-8')
+            # print(statusByte)
 
-        if statusByte == '*': ## Instrument is busy
-            self.__PUMP_STATUS__ = 2
-        elif statusByte == 'Y': ## Instrument is idle with nothing in command queue
-            self.__PUMP_STATUS__ = 1
-        elif statusByte == 'N': ## Instrument is idle with a non-empty command queue
-            self.__PUMP_STATUS__ = 2
+            if statusByte == '*': ## Instrument is busy
+                self.__PUMP_STATUS__ = 2
+            elif statusByte == 'Y': ## Instrument is idle with nothing in command queue
+                self.__PUMP_STATUS__ = 1
+            elif statusByte == 'N': ## Instrument is idle with a non-empty command queue
+                self.__PUMP_STATUS__ = 2
+
 
 
         # print(len(ack))
