@@ -346,7 +346,7 @@
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_3">
      <item>
-      <widget class="QComboBox" name="comboBox">
+      <widget class="QComboBox" name="volume_units">
        <item>
         <property name="text">
          <string>µl</string>

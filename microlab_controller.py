@@ -1,6 +1,6 @@
 import sys, os, time, glob
 import logging
-
+import traceback
 
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
@@ -161,9 +161,6 @@ class mainWindow(QMainWindow):
             status_text += 'Connected'
 
         if self.backend.__PUMP_CONNECTION__ == 1:
-            # if self.backend.__PUMP_STATUS__ != 2:
-            #     worker = Worker(self.backend.pollPumpStatus)
-            #     self.threadpool.start(worker)
 
             self.window.commConnect.setEnabled(False)
             self.window.commDisconnect.setEnabled(True)
@@ -180,7 +177,7 @@ class mainWindow(QMainWindow):
 
             # Pump buttons
             # self.window.pumpGo.setEnabled(True)
-            # self.window.pumpStop.setEnabled(True)
+            self.window.pumpStop.setEnabled(True)
             self.window.repaint()
         else:
             self.window.commConnect.setEnabled(True)
@@ -204,6 +201,9 @@ class mainWindow(QMainWindow):
         aspirate_rate = float(self.window.aspirate_rate.text())
         dispense_rate = float(self.window.dispense_rate.text())
         config_syringe_volume = float(self.window.config_syringe_volume.text())
+        
+        if self.window.volume_units.currentText() == 'ml':
+            volume = volume *1000
 
         aspirate_sec_per_full_stroke = round(config_syringe_volume/(aspirate_rate/60.0))
         dispense_sec_per_full_stroke = round(config_syringe_volume/(dispense_rate/60.0))
@@ -231,9 +231,9 @@ class mainWindow(QMainWindow):
             return
 
 
-        # worker = Worker(self.backend.pumpCmd, syringe=self.window.syringeMode.currentText(), volume=volume,
-        #     aspirate=aspirate_rate, dispense=dispense_rate, syringe_volume=config_syringe_volume)
-        # self.threadpool.start(worker)
+        worker = Worker(self.backend.pumpCmd, syringe=self.window.syringeMode.currentText(), volume=volume,
+            aspirate=aspirate_rate, dispense=dispense_rate, syringe_volume=config_syringe_volume)
+        self.threadpool.start(worker)
 
     def pumpstopcmd(self):
         worker = Worker(self.backend.stopPump)
