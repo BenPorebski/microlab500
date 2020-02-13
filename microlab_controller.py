@@ -21,11 +21,6 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
 
 
 
-
-
-
-
-
 class WorkerSignals(QObject):
     '''
     Defines the signals available from a running worker thread.
@@ -159,6 +154,12 @@ class mainWindow(QMainWindow):
         # Pump status polling.
         # Used to update buttons and pump status text on gui.
 
+        status_text = ''
+        if self.backend.__PUMP_CONNECTION__ == 0:
+            status_text += 'Disconnected'
+        elif self.backend.__PUMP_CONNECTION__ == 1:
+            status_text += 'Connected'
+
         if self.backend.__PUMP_CONNECTION__ == 1:
             # if self.backend.__PUMP_STATUS__ != 2:
             #     worker = Worker(self.backend.pollPumpStatus)
@@ -168,9 +169,18 @@ class mainWindow(QMainWindow):
             self.window.commDisconnect.setEnabled(True)
             self.window.commInitialise.setEnabled(True)
 
+            if self.backend.__PUMP_STATUS__ == 0:
+                status_text += ', Uninitialised'
+            elif self.backend.__PUMP_STATUS__ == 1:
+                status_text += ', Ready'
+                self.window.pumpGo.setEnabled(True)
+            elif self.backend.__PUMP_STATUS__ == 2:
+                self.window.pumpGo.setEnabled(False)
+                status_text += ', Busy'
+
             # Pump buttons
-            self.window.pumpGo.setEnabled(True)
-            self.window.pumpStop.setEnabled(True)
+            # self.window.pumpGo.setEnabled(True)
+            # self.window.pumpStop.setEnabled(True)
             self.window.repaint()
         else:
             self.window.commConnect.setEnabled(True)
@@ -182,29 +192,48 @@ class mainWindow(QMainWindow):
             self.window.pumpStop.setEnabled(False)
             self.window.repaint()
 
-        status_text = ''
-        if self.backend.__PUMP_CONNECTION__ == 0:
-            status_text += 'Disconnected'
-        elif self.backend.__PUMP_CONNECTION__ == 1:
-            status_text += 'Connected'
 
-        if self.backend.__PUMP_STATUS__ == 0:
-            status_text += ', Uninitialised'
-        elif self.backend.__PUMP_STATUS__ == 1:
-            status_text += ', Ready'
-            self.window.pumpGo.setEnabled(True)
-        elif self.backend.__PUMP_STATUS__ == 2:
-            self.window.pumpGo.setEnabled(False)
-            status_text += ', Busy'
 
         self.window.pumpStatus.setText(status_text)
 
 
 
     def pumpcmd(self):
-        worker = Worker(self.backend.pumpCmd, syringe=self.window.syringeMode.currentText(), volume=float(self.window.volume.text()),
-            aspirate=float(self.window.aspirate_rate.text()), dispense=float(self.window.dispense_rate.text()))
-        self.threadpool.start(worker)
+        # Check to make sure rates are within spec of the pump.
+        volume = float(self.window.volume.text())
+        aspirate_rate = float(self.window.aspirate_rate.text())
+        dispense_rate = float(self.window.dispense_rate.text())
+        config_syringe_volume = float(self.window.config_syringe_volume.text())
+
+        aspirate_sec_per_full_stroke = round(config_syringe_volume/(aspirate_rate/60.0))
+        dispense_sec_per_full_stroke = round(config_syringe_volume/(dispense_rate/60.0))
+        min_rate = config_syringe_volume*60.0/250.0
+        max_rate = config_syringe_volume*60.0/1.0
+
+        if aspirate_sec_per_full_stroke > 250 or aspirate_sec_per_full_stroke < 1:
+            # Raise an error widget.
+            rate_error = QMessageBox()
+            rate_error.setIcon(QMessageBox.Critical)
+            rate_error.setText("Invalid aspiration rate")
+            rate_error.setInformativeText("Pump and syringe combination has a minimum and maximum aspiration rate of %d and %d ul/minute." % (
+                min_rate, max_rate))
+            rate_error.exec_()
+            return
+
+        if dispense_sec_per_full_stroke > 250 or dispense_sec_per_full_stroke < 1:
+            # Raise an error widget.
+            rate_error = QMessageBox()
+            rate_error.setIcon(QMessageBox.Critical)
+            rate_error.setText("Invalid dispense rate")
+            rate_error.setInformativeText("Pump and syringe combination has a minimum and maximum dispense rate of %d and %d ul/minute." % (
+                min_rate, max_rate))
+            rate_error.exec_()
+            return
+
+
+        # worker = Worker(self.backend.pumpCmd, syringe=self.window.syringeMode.currentText(), volume=volume,
+        #     aspirate=aspirate_rate, dispense=dispense_rate, syringe_volume=config_syringe_volume)
+        # self.threadpool.start(worker)
 
     def pumpstopcmd(self):
         worker = Worker(self.backend.stopPump)
