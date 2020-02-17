@@ -171,8 +171,8 @@ class mainWindow(QMainWindow):
                 status_text += ', Busy'
 
             # Pump buttons
-            # self.window.pumpGo.setEnabled(True)
             self.window.pumpStop.setEnabled(True)
+            self.window.pumpDispense.setEnabled(True)
             self.window.repaint()
         else:
             self.window.commConnect.setEnabled(True)

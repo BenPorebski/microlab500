@@ -253,6 +253,9 @@ class pumpObject():
 
         if absStepPosB+steps_to_pump > stroke_steps or absStepPosC+steps_to_pump > stroke_steps:
             logging.info("Dispensing syringe to waste.")
+            self.__direction__ = 'Dispensing'
+            self.__pumping_volume__ = syringe_volume
+            self.__flow_rate__ = dispense
             self.serialObject.write(bytearray(dispense_cmd_to_send.encode('ascii')))
             ack = self.read_from_pump()
             cmdecho = self.read_from_pump()
