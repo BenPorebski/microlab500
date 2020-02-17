@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>Microlab 500 controller</string>
   </property>
+  <property name="windowOpacity">
+   <double>1.000000000000000</double>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QComboBox" name="commCombo">
     <property name="geometry">
@@ -72,25 +75,6 @@
      <bool>false</bool>
     </property>
    </widget>
-   <widget class="QPlainTextEdit" name="plainTextEdit">
-    <property name="enabled">
-     <bool>false</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>520</y>
-      <width>721</width>
-      <height>121</height>
-     </rect>
-    </property>
-    <property name="undoRedoEnabled">
-     <bool>false</bool>
-    </property>
-    <property name="readOnly">
-     <bool>true</bool>
-    </property>
-   </widget>
    <widget class="QPushButton" name="commDisconnect">
     <property name="enabled">
      <bool>false</bool>
@@ -143,8 +127,8 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>490</y>
-      <width>91</width>
+      <y>340</y>
+      <width>101</width>
       <height>31</height>
      </rect>
     </property>
@@ -155,8 +139,8 @@
    <widget class="QLabel" name="pumpStatus">
     <property name="geometry">
      <rect>
-      <x>100</x>
-      <y>490</y>
+      <x>120</x>
+      <y>340</y>
       <width>241</width>
       <height>31</height>
      </rect>
@@ -194,9 +178,9 @@
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
-      <x>28</x>
+      <x>18</x>
       <y>91</y>
-      <width>121</width>
+      <width>131</width>
       <height>121</height>
      </rect>
     </property>
@@ -300,7 +284,7 @@
       <rect>
        <x>10</x>
        <y>30</y>
-       <width>119</width>
+       <width>121</width>
        <height>24</height>
       </rect>
      </property>
@@ -311,7 +295,7 @@
     <widget class="QLineEdit" name="config_syringe_volume">
      <property name="geometry">
       <rect>
-       <x>120</x>
+       <x>140</x>
        <y>30</y>
        <width>61</width>
        <height>21</height>
@@ -324,9 +308,9 @@
     <widget class="QLabel" name="label_11">
      <property name="geometry">
       <rect>
-       <x>190</x>
+       <x>210</x>
        <y>30</y>
-       <width>79</width>
+       <width>51</width>
        <height>24</height>
       </rect>
      </property>
@@ -335,12 +319,12 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>290</x>
       <y>120</y>
-      <width>68</width>
+      <width>91</width>
       <height>91</height>
      </rect>
     </property>
@@ -375,6 +359,113 @@
      </item>
     </layout>
    </widget>
+   <widget class="QLineEdit" name="current_task">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>370</y>
+      <width>721</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="acceptDrops">
+     <bool>false</bool>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="time_progress">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>430</y>
+      <width>721</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="acceptDrops">
+     <bool>false</bool>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="task_progress">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>400</y>
+      <width>721</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="acceptDrops">
+     <bool>false</bool>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QPlainTextEdit" name="log_data_view">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>480</y>
+      <width>731</width>
+      <height>161</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="acceptDrops">
+     <bool>false</bool>
+    </property>
+    <property name="inputMethodHints">
+     <set>Qt::ImhNone</set>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Sunken</enum>
+    </property>
+    <property name="undoRedoEnabled">
+     <bool>false</bool>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pumpDispense">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>260</y>
+      <width>161</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Dispense to waste</string>
+    </property>
+   </widget>
    <zorder>commConnect</zorder>
    <zorder>layoutWidget</zorder>
    <zorder>layoutWidget</zorder>
@@ -386,12 +477,15 @@
    <zorder>pumpStop</zorder>
    <zorder>label_3</zorder>
    <zorder>pumpStatus</zorder>
-   <zorder>plainTextEdit</zorder>
    <zorder>commCombo</zorder>
    <zorder>layoutWidget</zorder>
    <zorder>commRefresh</zorder>
    <zorder>groupBox</zorder>
-   <zorder>comboBox</zorder>
+   <zorder>current_task</zorder>
+   <zorder>time_progress</zorder>
+   <zorder>task_progress</zorder>
+   <zorder>log_data_view</zorder>
+   <zorder>pumpDispense</zorder>
   </widget>
  </widget>
  <resources/>

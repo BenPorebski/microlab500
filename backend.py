@@ -1,20 +1,17 @@
 import serial
 import time
 import logging
-# import PySide2
-# import PySide2.QtGui
-# from PySide2 import QtGui, QtCore, QtWidgets
-# from PySide2.QtUiTools import QUiLoader
-# from PySide2.QtWidgets import QApplication
-# from PySide2.QtCore import QFile, QTimer
+from datetime import datetime
 
 
 
 
 
 ## Configure the logger.
+
+LOG_FILE = '%s_microlab.log' % (datetime.now().strftime("%Y:%m:%d:%H:%M:%S"))
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO)
+    level=logging.INFO, filename=LOG_FILE)
 
 
 class pumpObject():
@@ -22,7 +19,26 @@ class pumpObject():
     def __init__(self):
         self.__PUMP_CONNECTION__ = 0 # 0 = Disconnected, 1 = Connected
         self.__PUMP_STATUS__ = 0 # 0 = Uninitialised, 1 = Ready, 2 = Busy
-        self.__PUMP_STOP__ = 0 # 0 = No emergency stop, 1 = Stop, break all pumping loops.
+        self.__PUMP_STOP__ = 0 # 0 = Nothing, 1 = Immediate stop, break all pumping loops.
+
+
+        ## Pumping state details.
+        # Current action of a single stroke.
+        self.__direction__ = '' # Aspirate or dispense.
+        self.__pumping_volume__ = 0 ## ul.
+        self.__flow_rate__ = 0 # ul/minute.
+
+        # Compound task.
+        self.__pumped_volume__ = 0 # ul.
+        self.__total_volume__ = 0 # ul.
+
+        # Time.
+        self.__time_start__ = 0 # unix time stamp.
+        self.__time_elapsed__ = 0 # seconds.
+        self.__time_estimated__ = 0 # seconds.
+
+
+
 
 
 
@@ -81,7 +97,6 @@ class pumpObject():
 
 
     def read_from_pump(self):
-        # QTimer.singleShot(10, lambda: None)
         time.sleep(0.01)
         recv_buffer = b''
         while True:
@@ -104,10 +119,53 @@ class pumpObject():
         self.serialObject.write(b'aK\r')
         ack = self.read_from_pump()
         ack = self.read_from_pump()
+        time.sleep(0.1)
         self.serialObject.write(b'aV\r')
         ack = self.read_from_pump()
         ack = self.read_from_pump()
         logging.info('Stopping pump! Clearing command queue.')
+
+        # Wait for pump to be ready.
+        while self.__PUMP_STATUS__ == 2:
+            time.sleep(0.1)
+            self.pollPumpStatus()
+        logging.info('Pump stopped.')
+
+
+    def dispensePump(self, syringe='A+B', dispense=2500, syringe_volume=500.0, stroke_steps=1000.0):
+        # Dispense syringe volume to waste.
+        dispense_sec_per_full_stroke = round(syringe_volume/(dispense/60.0))
+        pump_instruction = 'M0S%dN0' % (dispense_sec_per_full_stroke)
+
+        if syringe == 'A+B':
+            dispense_cmd_to_send = 'aBO%sOCO%sOR\r' % (pump_instruction, pump_instruction)
+        elif syringe == 'A':
+            dispense_cmd_to_send = 'aBO%sOR\r' % (pump_instruction)
+        elif syringe == 'B':
+            dispense_cmd_to_send = 'aCO%sOR\r' % (pump_instruction)
+
+
+        logging.info("Dispensing syringe to waste.")
+        self.__direction__ = 'Dispensing'
+        self.__pumping_volume__ = syringe_volume
+        self.__flow_rate__ = dispense
+
+        self.serialObject.write(bytearray(dispense_cmd_to_send.encode('ascii')))
+        ack = self.read_from_pump()
+        cmdecho = self.read_from_pump()
+
+        logging.info(ack)
+        logging.info(cmdecho)
+        self.__PUMP_STATUS__ = 2
+
+
+        # Wait for pump to be ready.
+        while self.__PUMP_STATUS__ == 2:
+            time.sleep(0.1)
+            self.pollPumpStatus()
+            if self.__PUMP_STOP__ == 1:
+                break
+
 
 
     def checkPumpConfig(self):
@@ -135,7 +193,6 @@ class pumpObject():
         ## This function allows for pumping volumes greater than the syringe volume.
 
         stroke_steps = 1000.0
-        # syringe_volume = 500.0 # in uL
 
         volume_remaining = volume
 
@@ -209,6 +266,8 @@ class pumpObject():
         while self.__PUMP_STATUS__ == 2:
             time.sleep(0.1)
             self.pollPumpStatus()
+            if self.__PUMP_STOP__ == 1:
+                break
 
 
         # Aspirate the syringe.

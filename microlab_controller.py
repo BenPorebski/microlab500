@@ -13,12 +13,6 @@ import backend
 
 
 
-## Configure the logger.
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO)
-
-
-
 
 
 class WorkerSignals(QObject):
@@ -77,9 +71,9 @@ class mainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.threadpool = QThreadPool()
-
         self.backend = backend.pumpObject()
+
+        self.threadpool = QThreadPool()
 
         self.setupUI()
 
@@ -89,11 +83,12 @@ class mainWindow(QMainWindow):
         self.statusTimer.timeout.connect(self.pollStatus)
         self.statusTimer.start(500) ## Poll the pump status every 500ms.
 
+        self.log_fh = open(backend.LOG_FILE, 'r')
 
 
     def setupUI(self):
-        x = qdarkstyle.load_stylesheet_pyside2()
-        app.setStyleSheet(x)
+        # x = qdarkstyle.load_stylesheet_pyside2()
+        # app.setStyleSheet(x)
 
         ui_file = QFile("main.ui")
         ui_file.open(QFile.ReadOnly)
@@ -112,12 +107,13 @@ class mainWindow(QMainWindow):
         self.window.commInitialise.clicked.connect(self.initialise)
         self.window.pumpGo.clicked.connect(self.pumpcmd)
         self.window.pumpStop.clicked.connect(self.pumpstopcmd)
+        self.window.pumpDispense.clicked.connect(self.pumpdispensecmd)
 
 
 
 
     def refreshCommPorts(self):
-        logging.info('Refreshing com ports.')
+        backend.logging.info('Refreshing com ports.')
 
         search_dir = '/dev'
         files = glob.glob(os.path.join(search_dir, 'tty*'))
@@ -140,7 +136,6 @@ class mainWindow(QMainWindow):
         worker = Worker(self.backend.disconnect)
         self.threadpool.start(worker)
 
-        # self.statusTimer.stop() # Stop the status timer.
 
 
     def initialise(self):
@@ -193,6 +188,35 @@ class mainWindow(QMainWindow):
 
         self.window.pumpStatus.setText(status_text)
 
+        # Update the log file stream.
+        log_data_line = self.log_fh.readline().rstrip()
+        if log_data_line:
+            self.window.log_data_view.appendPlainText(log_data_line)
+
+
+
+        ## Pumping details. Update from backend variables only if actively pumping.
+        if self.backend.__PUMP_STATUS__ == 2: ## Pump status of 2 is busy.
+
+            # Current task.
+            self.window.current_task.setText('%s %d µl at %d µl/minute.' % (
+                self.backend.__direction__, self.backend.__pumping_volume__, self.backend.__flow_rate__))
+
+            # Volume pumped.
+            self.window.task_progress.setText('Progress: %d µl of %d µl.' % (
+                self.backend.__pumped_volume__, self.backend.__total_volume__))
+
+            # Time elapsed/total.
+            self.window.time_progress.setText('Time elapsed/Time total: %d seconds of %d seconds.' % (
+                self.backend.__time_elapsed__, self.backend.__time_estimated__))
+
+        # else:
+        #     self.window.current_task.setText('')
+        #     self.window.task_progress.setText('')
+        #     self.window.time_progress.setText('')
+
+
+
 
 
     def pumpcmd(self):
@@ -201,7 +225,7 @@ class mainWindow(QMainWindow):
         aspirate_rate = float(self.window.aspirate_rate.text())
         dispense_rate = float(self.window.dispense_rate.text())
         config_syringe_volume = float(self.window.config_syringe_volume.text())
-        
+
         if self.window.volume_units.currentText() == 'ml':
             volume = volume *1000
 
@@ -239,9 +263,18 @@ class mainWindow(QMainWindow):
         worker = Worker(self.backend.stopPump)
         self.threadpool.start(worker)
 
+    def pumpdispensecmd(self):
+        dispense_rate = float(self.window.dispense_rate.text())
+        config_syringe_volume = float(self.window.config_syringe_volume.text())
+
+        worker = Worker(self.backend.dispensePump, syringe=self.window.syringeMode.currentText(),
+            dispense=dispense_rate, syringe_volume=config_syringe_volume)
+
 
 if __name__ == "__main__":
+
     app = QApplication(sys.argv)
+    app.setStyleSheet(qdarkstyle.load_stylesheet())
 
     window = mainWindow()
 
