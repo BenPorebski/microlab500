@@ -256,6 +256,7 @@ class pumpObject():
             self.__direction__ = 'Dispensing'
             self.__pumping_volume__ = syringe_volume
             self.__flow_rate__ = dispense
+
             self.serialObject.write(bytearray(dispense_cmd_to_send.encode('ascii')))
             ack = self.read_from_pump()
             cmdecho = self.read_from_pump()
@@ -275,6 +276,10 @@ class pumpObject():
 
         # Aspirate the syringe.
         logging.info('Aspirating %d uL.' % (volume))
+        self.__direction__ = 'Aspirating'
+        self.__pumping_volume__ = volume
+        self.__flow_rate__ = aspirate
+
         pump_instruction = 'P%dS%dN5' % (steps_to_pump, seconds_per_full_stroke)
 
         if syringe == 'A+B':

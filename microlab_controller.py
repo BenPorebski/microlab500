@@ -211,7 +211,7 @@ class mainWindow(QMainWindow):
                 self.backend.__time_elapsed__, self.backend.__time_estimated__))
 
         # else:
-        #     self.window.current_task.setText('')
+            self.window.current_task.setText('')
         #     self.window.task_progress.setText('')
         #     self.window.time_progress.setText('')
 
@@ -269,6 +269,7 @@ class mainWindow(QMainWindow):
 
         worker = Worker(self.backend.dispensePump, syringe=self.window.syringeMode.currentText(),
             dispense=dispense_rate, syringe_volume=config_syringe_volume)
+        self.threadpool.start(worker)
 
 
 if __name__ == "__main__":
