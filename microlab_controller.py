@@ -166,13 +166,14 @@ class mainWindow(QMainWindow):
             elif self.backend.__PUMP_STATUS__ == 1:
                 status_text += ', Ready'
                 self.window.pumpGo.setEnabled(True)
+                self.window.pumpDispense.setEnabled(True)
             elif self.backend.__PUMP_STATUS__ == 2:
                 self.window.pumpGo.setEnabled(False)
+                self.window.pumpDispense.setEnabled(False)
                 status_text += ', Busy'
 
             # Pump buttons
             self.window.pumpStop.setEnabled(True)
-            self.window.pumpDispense.setEnabled(True)
             self.window.repaint()
         else:
             self.window.commConnect.setEnabled(True)
@@ -207,11 +208,12 @@ class mainWindow(QMainWindow):
                 self.backend.__pumped_volume__, self.backend.__total_volume__))
 
             # Time elapsed/total.
+            time_elapsed = self.backend.__time_start__ - time.time()
             self.window.time_progress.setText('Time elapsed/Time total: %d seconds of %d seconds.' % (
-                self.backend.__time_elapsed__, self.backend.__time_estimated__))
+                time_elapsed, self.backend.__time_estimated__))
 
         # else:
-            self.window.current_task.setText('')
+            # self.window.current_task.setText('')
         #     self.window.task_progress.setText('')
         #     self.window.time_progress.setText('')
 

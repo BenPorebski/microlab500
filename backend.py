@@ -196,6 +196,13 @@ class pumpObject():
 
         volume_remaining = volume
 
+        self.__pumped_volume__ = 0
+        self.__total_volume__ = volume
+
+        self.__time_start__ = time.time()
+
+        self.__time_estimated__ = volume/(aspirate/60.0) + (round(volume/syringe_volume)*(syringe_volume/(dispense/60.0)))
+
         while volume_remaining > 0:
             # if self.__PUMP_STATUS__ == 2:
             #     time.sleep(0.3)
@@ -210,6 +217,8 @@ class pumpObject():
             else:
                 self.pumpCmdSingleStroke(syringe, volume_remaining, aspirate, dispense, stroke_steps, syringe_volume)
                 volume_remaining = volume_remaining-syringe_volume
+
+            self.__pumped_volume__ = volume - volume_remaining
 
         self.__PUMP_STOP__ = 0
 
