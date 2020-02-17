@@ -208,7 +208,7 @@ class mainWindow(QMainWindow):
                 self.backend.__pumped_volume__, self.backend.__total_volume__))
 
             # Time elapsed/total.
-            time_elapsed = self.backend.__time_start__ - time.time()
+            time_elapsed = time.time() - self.backend.__time_start__
             self.window.time_progress.setText('Time elapsed/Time total: %d seconds of %d seconds.' % (
                 time_elapsed, self.backend.__time_estimated__))
 
